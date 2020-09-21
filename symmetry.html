@@ -1,0 +1,268 @@
+<html>
+<head>
+    <title>Symmetry</title>
+    <style>
+    #mainCanvas {
+    width: 100%;
+    height: 100%;
+    border: 2px solid blue;
+    }
+</style>
+    <script>
+    let centerX = 0;
+    let centerY = 0;
+    let radius = 0;
+    let hLine = 0;
+    let angleLeft = 20;
+    let angleRight = 40;
+    let lineFactor = 10;
+    let mouseDown = false;
+    let circleRadius = 10;
+    let canvas = null;
+    let border = 50;
+    let movingCenter = false;
+    let movingLeft = false;
+    let movingRight = false;
+    let mirror = true;
+
+    function calculateLine(x,y,gradient) {
+      return {
+        gradient: gradient,
+        intercept: y - x*gradient
+      }
+    }
+
+
+    function render() {
+      let ctx = canvas.getContext('2d');
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // draw horizontakl line
+      ctx.beginPath();
+      ctx.strokeStyle = "black";
+      ctx.lineWidth = 2;
+      ctx.moveTo(0, hLine);
+      ctx.lineTo(ctx.canvas.clientWidth, hLine);
+      ctx.stroke();
+
+      // draw center circle
+      ctx.beginPath();
+      ctx.fillStyle = "blue";
+      ctx.lineWidth = 3;
+      ctx.arc(centerX, centerY, circleRadius, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // draw left circle
+      let leftX = centerX - radius * Math.sin(angleLeft * 2 * Math.PI / 360);
+      let leftY = centerY + radius * Math.cos(angleLeft * 2 * Math.PI / 360);
+      ctx.beginPath();
+      ctx.fillStyle = "blue";
+      ctx.lineWidth = 3;
+
+      ctx.arc(leftX, leftY, circleRadius, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // draw left line through left circle
+      ctx.beginPath();
+      ctx.strokeStyle = "blue";
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX + (leftX - centerX)*lineFactor, centerY + (leftY - centerY)*lineFactor);
+      ctx.stroke();
+
+      // draw right circle
+      let rightX = centerX + radius * Math.sin(angleRight * 2 * Math.PI / 360);
+      let rightY = centerY + radius * Math.cos(angleRight * 2 * Math.PI / 360);
+      ctx.beginPath();
+      ctx.fillStyle = "blue";
+      ctx.lineWidth = 3;
+      ctx.arc(rightX, rightY, circleRadius, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // draw right line through right circle
+      ctx.beginPath();
+      ctx.strokeStyle = "blue";
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX + (rightX - centerX)*lineFactor, centerY + (rightY - centerY)*lineFactor);
+      ctx.stroke();
+
+      if (mirror) {
+         let interiorAngle = angleLeft + angleRight;
+
+         // calculate first black line
+         let h = hLine - centerY; // height of triangle
+         let r = h / Math.cos(angleLeft * Math.PI / 180); // hypotenuse
+         let rf = 90 - angleLeft; // reflection angle
+         let x = centerX - r * Math.sin(angleLeft * Math.PI / 180);
+         let y = hLine;
+
+
+         // draw angles on left
+         var a;
+         for (a = angleLeft + interiorAngle; a <= 180; a+=interiorAngle) {
+           ctx.beginPath();
+           ctx.strokeStyle = "LightBlue";
+           ctx.moveTo(centerX, centerY);
+           let rayX = centerX - radius * Math.sin(a * Math.PI / 180);
+           let rayY = centerY + radius * Math.cos(a * Math.PI / 180);
+           ctx.lineTo(centerX + (rayX - centerX)*lineFactor, centerY + (rayY - centerY)*lineFactor);
+           ctx.stroke();
+
+           // draw the black line
+           let h2 = r * Math.sin(rf * Math.PI / 180);
+           let rf2 = 180 - rf - interiorAngle;
+           let r2 = h2 / Math.sin(rf2 * Math.PI / 180);
+           let x2 = centerX - r2 * Math.sin(a * Math.PI / 180);
+           let y2 = centerY + r2 * Math.cos(a * Math.PI / 180);
+           ctx.beginPath();
+           ctx.strokeStyle = "black";
+           ctx.moveTo(x, y);
+           ctx.lineTo(x2,y2);
+           ctx.stroke();
+           h = h2;
+           rf = rf2;
+           r = r2;
+           x = x2;
+           y = y2;
+         }
+
+
+         h = hLine - centerY; // height of triangle
+         r = h / Math.cos(angleRight * Math.PI / 180); // hypotenuse
+         rf = 90 - angleRight; // reflection angle
+         x = centerX + r * Math.sin(angleRight * Math.PI / 180);
+         y = hLine;
+         // draw lines right
+         for (a = angleRight + interiorAngle; a <= 180; a+=interiorAngle) {
+           ctx.beginPath();
+           ctx.strokeStyle = "LightBlue";
+           ctx.moveTo(centerX, centerY);
+           let rayX = centerX + radius * Math.sin(a * Math.PI / 180);
+           let rayY = centerY + radius * Math.cos(a * Math.PI / 180);
+           ctx.lineTo(centerX + (rayX - centerX)*lineFactor, centerY + (rayY - centerY)*lineFactor);
+           ctx.stroke();
+
+           // draw the black line
+           let h2 = r * Math.sin(rf * Math.PI / 180);
+           let rf2 = 180 - rf - interiorAngle;
+           let r2 = h2 / Math.sin(rf2 * Math.PI / 180);
+           let x2 = centerX + r2 * Math.sin(a * Math.PI / 180);
+           let y2 = centerY + r2 * Math.cos(a * Math.PI / 180);
+           ctx.beginPath();
+           ctx.strokeStyle = "black";
+           ctx.moveTo(x, y);
+           ctx.lineTo(x2,y2);
+           ctx.stroke();
+           h = h2;
+           rf = rf2;
+           r = r2;
+           x = x2;
+           y = y2;
+         }
+      }
+    }
+    function onResize() {
+        let width = canvas.clientWidth;
+        let height = canvas.clientHeight;
+        canvas.width = width;
+        canvas.height = height
+        centerX = width/2;
+        centerY = height/3;
+        radius = height/3;
+        hLine = height * 3/4;
+        render();
+    };
+
+    function distance(x1,y1,x2,y2) {
+      return Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+    }
+
+    function onMouseDown(e) {
+      mouseDown = true;
+    }
+
+    function onMouseUp(e) {
+      mouseDown = false;
+      movingCenter = false;
+      movingLeft = false;
+      movingRight = false;
+      canvas.style.cursor="default";
+    }
+
+    function onMouseMove(e) {
+      let mouseX = e.offsetX;
+      let mouseY = e.offsetY;
+
+      if (movingCenter) {
+        if (mouseY < hLine - border && mouseY > border) {
+          centerY = mouseY;
+        }
+        if (mouseX > border && mouseX < canvas.clientWidth - border) {
+          centerX = mouseX;
+        }
+
+        render();
+        return;
+      } else if (movingLeft) {
+
+        if (mouseX < centerX && mouseY > centerY) {
+          // calculate angle
+          let angle = Math.asin((centerX - mouseX) / radius)*180/Math.PI;
+          if (angle > 5 && angle < 85) {
+            angleLeft = Math.floor(angle);
+            render();
+            return;
+          }
+        }
+      } else if (movingRight) {
+
+        if (mouseX > centerX && mouseY > centerY) {
+          // calculate angle
+          let angle = Math.asin((mouseX - centerX) / radius)*180/Math.PI;
+          if (angle > 5 && angle < 85) {
+            angleRight = Math.ceil(angle);
+            render();
+            return;
+          }
+        }
+      }
+
+
+      if (distance(mouseX, mouseY, centerX, centerY) < circleRadius) {
+        if (mouseDown) {
+          movingCenter = true;
+        }
+        canvas.style.cursor="pointer";
+      } else if (distance(mouseX, mouseY, centerX - radius * Math.sin(angleLeft * 2 * Math.PI / 360), centerY + radius * Math.cos(angleLeft * 2 * Math.PI / 360)) < circleRadius) {
+        if (mouseDown) {
+          movingLeft = true;
+        }
+        canvas.style.cursor="pointer";
+      } else if (distance(mouseX, mouseY, centerX + radius * Math.sin(angleRight * 2 * Math.PI / 360), centerY + radius * Math.cos(angleRight * 2 * Math.PI / 360)) < circleRadius) {
+        if (mouseDown) {
+          movingRight = true;
+        }
+        canvas.style.cursor="pointer";
+      }
+      else {
+        canvas.style.cursor="default";
+      }
+    }
+
+    window.onload = function() {
+        document.body.onresize = onResize;
+        canvas = document.getElementById("mainCanvas");
+        canvas.addEventListener('mousedown', onMouseDown);
+        canvas.addEventListener('mouseup', onMouseUp);
+        canvas.addEventListener('mousemove', onMouseMove);
+        onResize();
+    };
+
+    </script>
+</head>
+<body>
+    <div class="main">
+        <canvas id="mainCanvas" ></canvas>
+    </div>
+</body>
+</html>
