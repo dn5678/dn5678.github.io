@@ -281,9 +281,6 @@
 
         canvas.addEventListener("touchstart", function (e) {
                 mousePos = getTouchPos(canvas, e);
-
-                alert("Touch!");
-
           var touch = e.touches[0];
           var mouseEvent = new MouseEvent("mousedown", {
             clientX: touch.clientX,
@@ -316,7 +313,7 @@
                 // Prevent scrolling when touching the canvas
         document.body.addEventListener("touchstart", function (e) {
           alert(e.target.name);
-          
+
           if (e.target == canvas) {
             e.preventDefault();
           }
