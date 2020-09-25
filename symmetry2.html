@@ -1,0 +1,315 @@
+<html>
+<head>
+    <title>Symmetry</title>
+    <style>
+    #mainCanvas {
+    width: 100%;
+    height: calc(100% - 1em) ;
+    }
+</style>
+    <script>
+    let centerX = 0;
+    let centerY = 0;
+    let radius = 0;
+    let hLine = 0;
+    let angleLeft = 30;
+    let angleRight = 30;
+    let lineFactor = 10;
+    let mouseDown = false;
+    let circleRadius = 10;
+    let canvas = null;
+    let notes = null;
+    let border = 50;
+    let movingCenter = false;
+    let movingLeft = false;
+    let movingRight = false;
+    let mirror = true;
+
+    function calculateLine(x,y,gradient) {
+      return {
+        gradient: gradient,
+        intercept: y - x*gradient
+      }
+    }
+
+
+    function render() {
+      let ctx = canvas.getContext('2d');
+
+      notes.innerHTML = "Angles: (" + (90 - angleLeft).toFixed(1) + ", " + (angleLeft + angleRight).toFixed(1) + ", " + (90 - angleRight).toFixed(1) + ")";
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // draw horizontakl line
+      ctx.beginPath();
+      ctx.strokeStyle = "black";
+      ctx.lineWidth = 2;
+      ctx.moveTo(0, hLine);
+      ctx.lineTo(ctx.canvas.clientWidth, hLine);
+      ctx.stroke();
+
+      // draw center circle
+      // ctx.beginPath();
+      // ctx.fillStyle = "blue";
+      // ctx.lineWidth = 3;
+      // ctx.arc(centerX, centerY, circleRadius, 0, 2 * Math.PI);
+      // ctx.fill();
+
+      // draw left circle
+      let leftX = centerX - radius * Math.sin(angleLeft * 2 * Math.PI / 360);
+      let leftY = centerY + radius * Math.cos(angleLeft * 2 * Math.PI / 360);
+      // ctx.beginPath();
+      // ctx.fillStyle = "blue";
+      // ctx.lineWidth = 3;
+      // ctx.arc(leftX, leftY, circleRadius, 0, 2 * Math.PI);
+      // ctx.fill();
+
+      // draw left line through left circle
+      ctx.beginPath();
+      ctx.strokeStyle = "blue";
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX + (leftX - centerX)*lineFactor, centerY + (leftY - centerY)*lineFactor);
+      ctx.stroke();
+
+      // draw right circle
+      let rightX = centerX + radius * Math.sin(angleRight * 2 * Math.PI / 360);
+      let rightY = centerY + radius * Math.cos(angleRight * 2 * Math.PI / 360);
+      // ctx.beginPath();
+      // ctx.fillStyle = "blue";
+      // ctx.lineWidth = 3;
+      // ctx.arc(rightX, rightY, circleRadius, 0, 2 * Math.PI);
+      // ctx.fill();
+
+      // draw right line through right circle
+      ctx.beginPath();
+      ctx.strokeStyle = "blue";
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX + (rightX - centerX)*lineFactor, centerY + (rightY - centerY)*lineFactor);
+      ctx.stroke();
+
+      if (mirror) {
+         let interiorAngle = angleLeft + angleRight;
+
+         // calculate first black line
+         let h = hLine - centerY; // height of triangle
+         let r = h / Math.cos(angleLeft * Math.PI / 180); // hypotenuse
+         let rf = 90 - angleLeft; // reflection angle
+         let x = centerX - r * Math.sin(angleLeft * Math.PI / 180);
+         let y = hLine;
+
+
+         // draw angles on left
+         var a;
+         for (a = angleLeft + interiorAngle; a <= 360; a+=interiorAngle) {
+
+           let rayX = centerX - radius * Math.sin(a * Math.PI / 180);
+           let rayY = centerY + radius * Math.cos(a * Math.PI / 180);
+           if (a <= 180) {
+             ctx.beginPath();
+             ctx.strokeStyle = "LightBlue";
+             ctx.moveTo(centerX, centerY);
+             ctx.lineTo(centerX + (rayX - centerX)*lineFactor, centerY + (rayY - centerY)*lineFactor);
+             ctx.stroke();
+           }
+
+           // draw the black line
+           let h2 = r * Math.sin(rf * Math.PI / 180);
+           let rf2 = 180 - rf - interiorAngle;
+           let r2 = h2 / Math.sin(rf2 * Math.PI / 180);
+           let x2 = centerX - r2 * Math.sin(a * Math.PI / 180);
+           let y2 = centerY + r2 * Math.cos(a * Math.PI / 180);
+           if (x2 > centerX) {
+             let ratio = (centerX - x) / (x2 - x);
+             y2 = y + (y2-y)*ratio;
+           }
+           ctx.beginPath();
+           ctx.strokeStyle = "black";
+           ctx.moveTo(x, y);
+           ctx.lineTo(Math.min(x2, centerX),y2);
+           ctx.stroke();
+           h = h2;
+           rf = rf2;
+           r = r2;
+           x = x2;
+           y = y2;
+           if (x2 > centerX) {
+             break;
+           }
+         }
+
+
+         h = hLine - centerY; // height of triangle
+         r = h / Math.cos(angleRight * Math.PI / 180); // hypotenuse
+         rf = 90 - angleRight; // reflection angle
+         x = centerX + r * Math.sin(angleRight * Math.PI / 180);
+         y = hLine;
+         // draw lines right
+         for (a = angleRight + interiorAngle; a <= 360; a+=interiorAngle) {
+           if (a <= 180) {
+             ctx.beginPath();
+             ctx.strokeStyle = "LightBlue";
+             ctx.moveTo(centerX, centerY);
+             let rayX = centerX + radius * Math.sin(a * Math.PI / 180);
+             let rayY = centerY + radius * Math.cos(a * Math.PI / 180);
+             ctx.lineTo(centerX + (rayX - centerX)*lineFactor, centerY + (rayY - centerY)*lineFactor);
+             ctx.stroke();
+           }
+
+           // draw the black line
+           let h2 = r * Math.sin(rf * Math.PI / 180);
+           let rf2 = 180 - rf - interiorAngle;
+           let r2 = h2 / Math.sin(rf2 * Math.PI / 180);
+           let x2 = centerX + r2 * Math.sin(a * Math.PI / 180);
+           let y2 = centerY + r2 * Math.cos(a * Math.PI / 180);
+           if (x2 < centerX) {
+             let ratio = (x - centerX) / (x - x2);
+             y2 = y + (y2-y)*ratio;
+           }
+           ctx.beginPath();
+           ctx.strokeStyle = "black";
+           ctx.moveTo(x, y);
+           ctx.lineTo(Math.max(x2, centerX),y2);
+           ctx.stroke();
+           h = h2;
+           rf = rf2;
+           r = r2;
+           x = x2;
+           y = y2;
+           if (x2 < centerX) {
+             break;
+           }
+         }
+      }
+    }
+    function onResize() {
+        let width = canvas.clientWidth;
+        let height = canvas.clientHeight;
+        canvas.width = width;
+        canvas.height = height
+        centerX = width/2;
+        centerY = height/2;
+        radius = height/3;
+        hLine = height * 3/4;
+        render();
+    };
+
+    function distance(x1,y1,x2,y2) {
+      return Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+    }
+
+    function onMouseDown(e) {
+      mouseDown = true;
+    }
+
+    function onMouseUp(e) {
+      mouseDown = false;
+      movingCenter = false;
+      movingLeft = false;
+      movingRight = false;
+      canvas.style.cursor="default";
+    }
+
+    function onMouseMove(e) {
+      let mouseX = e.offsetX;
+      let mouseY = e.offsetY;
+
+      let distanceToCenter = distance(mouseX, mouseY, centerX, centerY);
+
+      if (movingCenter) {
+        if (mouseY < hLine - border && mouseY > border) {
+          centerY = mouseY;
+        }
+        if (mouseX > border && mouseX < canvas.clientWidth - border) {
+          centerX = mouseX;
+        }
+
+        render();
+        return;
+      } else if (movingLeft) {
+        // calculate angle
+        let angle = (centerY >= mouseY)? 90 : Math.asin((centerX - mouseX) / distanceToCenter)*180/Math.PI;
+        let interiorAngle = angle + angleRight;
+        if (interiorAngle >= 10) {
+          angleLeft = Math.min(Math.max(angle, 0), 85);
+          render();
+          return;
+        }
+      } else if (movingRight) {
+        // calculate angle
+        let angle = (centerY >= mouseY)? 90 : Math.asin((mouseX - centerX) / distanceToCenter)*180/Math.PI;
+        let interiorAngle = angle + angleLeft;
+        console.log("Angle:" + angle);
+        if (interiorAngle >= 10) {
+          angleRight = Math.min(Math.max(angle, 0), 85);
+          render();
+          return;
+        }
+      }
+
+      let angleToCenter = Math.asin((centerX - mouseX) / distanceToCenter)*180/Math.PI;
+
+      if (distanceToCenter < circleRadius) {
+        if (mouseDown) {
+          movingCenter = true;
+        }
+        canvas.style.cursor="pointer";
+      } else if (Math.abs(angleLeft - angleToCenter) < 1) {
+        if (mouseDown) {
+          console.log("Moving Left");
+          movingLeft = true;
+        }
+        canvas.style.cursor="pointer";
+      } else if (Math.abs(angleRight + angleToCenter) < 1) {
+        if (mouseDown) {
+          console.log("Moving Right");
+          movingRight = true;
+        }
+        canvas.style.cursor="pointer";
+      }
+      else {
+        canvas.style.cursor="default";
+      }
+    }
+
+    window.onload = function() {
+        document.body.onresize = onResize;
+        canvas = document.getElementById("mainCanvas");
+        notes = document.getElementById("notes");
+        canvas.addEventListener('mousedown', onMouseDown);
+        canvas.addEventListener('mouseup', onMouseUp);
+        canvas.addEventListener('mousemove', onMouseMove);
+
+        canvas.addEventListener("touchstart", function (e) {
+                mousePos = getTouchPos(canvas, e);
+          var touch = e.touches[0];
+          var mouseEvent = new MouseEvent("mousedown", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+          });
+          canvas.dispatchEvent(mouseEvent);
+        }, false);
+        canvas.addEventListener("touchend", function (e) {
+          var mouseEvent = new MouseEvent("mouseup", {});
+          canvas.dispatchEvent(mouseEvent);
+        }, false);
+        canvas.addEventListener("touchmove", function (e) {
+          var touch = e.touches[0];
+          var mouseEvent = new MouseEvent("mousemove", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+          });
+          canvas.dispatchEvent(mouseEvent);
+        }, false);
+
+        onResize();
+    };
+
+    </script>
+</head>
+<body>
+    <div class="main">
+        <div id="notes">Hello World</div>
+        <canvas id="mainCanvas" ></canvas>
+    </div>
+</body>
+</html>
