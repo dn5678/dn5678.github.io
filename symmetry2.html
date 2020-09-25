@@ -6,6 +6,7 @@
     width: 100%;
     height: calc(100% - 1em) ;
     }
+
 </style>
     <script>
     let centerX = 0;
@@ -310,6 +311,10 @@
           };
         }
 
+        function preventDefault(e){
+          e.preventDefault();
+        }
+
                 // Prevent scrolling when touching the canvas
         document.body.addEventListener("touchstart", function (e) {
           e.preventDefault();
@@ -317,9 +322,10 @@
         document.body.addEventListener("touchend", function (e) {
           e.preventDefault();
         }, false);
-        document.body.addEventListener("touchmove", function (e) {
-          e.preventDefault();
-        }, false);
+        document.body.addEventListener('touchmove', preventDefault, { passive: false });
+        // document.body.addEventListener("touchmove", function (e) {
+        //   e.preventDefault();
+        // }, false);
 
         onResize();
     };
