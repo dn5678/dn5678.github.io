@@ -281,6 +281,9 @@
 
         canvas.addEventListener("touchstart", function (e) {
                 mousePos = getTouchPos(canvas, e);
+
+                alert("Touch!");
+                
           var touch = e.touches[0];
           var mouseEvent = new MouseEvent("mousedown", {
             clientX: touch.clientX,
